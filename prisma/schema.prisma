@@ -1,0 +1,365 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+// ONline db: https://vercel.com/api/marketplace/sso?integrationConfigurationId=icfg_CR0YDyWYqrQoBR7FvGiwiMoZ&product_id=iap_SYm1SIDap0OBqOvV&resource_id=shiny-wave-94885079&teamId=team_2kW2NcCjaUXcvfsZU68qeuAM
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String                   @id @default(uuid())
+  name                    String?
+  username                String?                  @unique
+  email                   String?                  @unique
+  avatarUrl               String?
+  role                    Role                     @default(USER)
+  createdAt               DateTime                 @default(now())
+  telephone               String?
+  passwordHash            String?
+  googleId                String?                  @unique
+  githubId                String?                  @unique
+  gender                  String?
+  bio                     String?
+  isWelcomed              Boolean                  @default(false)
+  isVerified              Boolean                  @default(false)
+  emailVerified           Boolean                  @default(false)
+  emailVerificationTokens EmailVerificationToken[]
+  employees               Employee[]
+  newsComments            NewsComment[]
+  newsArticleLikes        NewsArticleLike[]
+  newsArticles            NewsArticle[]
+  newsLetters             NewsLetter[]
+  sessions                Session[]
+  events                  Event[]
+  eventComments           EventComment[]
+  eventLikes              EventLike[]
+
+  @@map("users")
+}
+
+model Entity {
+  id                    String  @id @default(uuid())
+  webName               String
+  about                 String?
+  historyAndCulture     String?
+  geographicalLandmarks String?
+}
+
+model DepartMent {
+  id                  String               @id @default(uuid())
+  name                String
+  headOfDepartmentId  String?
+  about               String?
+  departmentalSectors DepartMentalSector[]
+  headOfDepartment    Employee?            @relation(fields: [headOfDepartmentId], references: [id])
+
+  @@map("departments")
+}
+
+model DepartMentalSector {
+  id           String      @id @default(uuid())
+  name         String
+  description  String?
+  departMentId String?
+  hierarchy    Int
+  departMent   DepartMent? @relation(fields: [departMentId], references: [id])
+  employees    Employee[]
+
+  @@map("departmental_sectors")
+}
+
+model Position {
+  id                  String        @id @default(uuid())
+  jobTitle            String
+  departmentalMandate String
+  salaryScale         String
+  reportsTo           Position?     @relation("PositionReportsTo", fields: [reportsToId], references: [id])
+  reportsToId         String?
+  responsibleFor      Position[]    @relation("PositionReportsTo")
+  duties              String[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @default(now()) @updatedAt
+  employees           Employee[]
+  appointments        Appointment[]
+
+  @@map("positions")
+}
+
+model Employee {
+  id                      String              @id @default(uuid())
+  assumedOffice           Int
+  endedOffice             Int?
+  position                Position?           @relation(fields: [positionId], references: [id])
+  shortMessageToPublic    String?
+  departMentalSectorId    String?
+  userId                  String
+  dob                     DateTime?
+  nationalIdNumber        String?
+  fileNumber              String?
+  taxIdentificationNumber String?
+  appointments            Appointment[]
+  supplierNumber          String?
+  employeeStatuses        EmployeeStatus[]
+  hierarchy               Int                 @default(0)
+  ippsNumber              String              @unique
+  departMents             DepartMent[]
+  departMentalSector      DepartMentalSector? @relation(fields: [departMentalSectorId], references: [id])
+  user                    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positionId              String?
+
+  @@map("employees")
+}
+
+model EmployeeStatus {
+  id           String     @id @default(uuid())
+  statusType   StatusType @default(PROBATION)
+  date         DateTime   @default(now())
+  minuteNumber String?
+  reason       String?
+  employee     Employee?  @relation(fields: [employeeId], references: [id])
+  employeeId   String?
+}
+
+enum StatusType {
+  PROBATION
+  CONFIRMED
+  SUSPENDED
+  RETIRED
+  RESIGNED
+}
+
+model Appointment {
+  id                     String          @id @default(uuid())
+  number                 Int
+  position               Position        @relation(fields: [positionId], references: [id])
+  basicSalary            Float?
+  organization           String
+  dateOfAppointment      DateTime
+  dateOfAssumptionOfDuty DateTime
+  dutyStation            String
+  minuteNumber           String
+  employee               Employee?       @relation(fields: [employeeId], references: [id])
+  employeeId             String?
+  positionId             String
+  appointmentType        AppointmentType @default(SUBSTANTIVE)
+
+  @@map("appointments")
+}
+
+enum AppointmentType {
+  SUBSTANTIVE
+  ACTING
+  CONTRACT
+  TEMPORARY
+  PROBATION
+}
+
+model EmailVerificationToken {
+  id      String @id @default(uuid())
+  userId  String
+  expires BigInt
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  lastVerifiedAt DateTime @default(now())
+  secretHash     String   @default(uuid())
+  role           Role     @default(USER)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model NewsLetterSubscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  @@map("news_letter_subscriptions")
+}
+
+model NewsLetter {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("news_letters")
+}
+
+model NewsArticle {
+  id               String              @id @default(uuid())
+  coverImageId     String?
+  coverImage       Media?              @relation("coverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  title            String
+  slug             String              @unique
+  summary          String?
+  category         NewsArticleCategory @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  tags             Tag[]               @relation("ArticleTags")
+  publishedAt      DateTime?
+  status           NewsArticleStatus   @default(DRAFT)
+  content          String
+  authorId         String?
+  location         String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  newsComments     NewsComment[]
+  newsArticleLikes NewsArticleLike[]
+  author           User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  media            Media[]             @relation("otherMedia")
+
+  @@map("news_articles")
+}
+
+model Media {
+  id                 String        @id @default(uuid())
+  type               MediaType
+  url                String
+  format             String        @default("png")
+  createdAt          DateTime      @default(now())
+  coverImageArticles NewsArticle[] @relation("coverImage")
+  newsArticle        NewsArticle?  @relation("otherMedia", fields: [newsArticleId], references: [id], onDelete: SetNull)
+  newsArticleId      String?
+  events             Event[]       @relation("EventCoverImage")
+  event              Event?        @relation("EventMedia", fields: [eventId], references: [id])
+  eventId            String?
+
+  @@map("attachment_media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model NewsArticleCategory {
+  id       String        @id @default(uuid())
+  name     String
+  slug     String        @unique
+  articles NewsArticle[]
+}
+
+model Tag {
+  id       String        @id @default(uuid())
+  name     String        @unique
+  articles NewsArticle[] @relation("ArticleTags")
+}
+
+enum NewsArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  PRIVATE
+}
+
+model NewsComment {
+  id            String      @id @default(uuid())
+  content       String
+  commenterId   String
+  newsArticleId String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  commenter     User        @relation(fields: [commenterId], references: [id], onDelete: Cascade)
+  newsArticle   NewsArticle @relation(fields: [newsArticleId], references: [id], onDelete: Cascade)
+
+  @@map("news_article_comments")
+}
+
+model NewsArticleLike {
+  id            String      @id @default(uuid())
+  likerId       String
+  newsArticleId String
+  createdAt     DateTime    @default(now())
+  liker         User        @relation(fields: [likerId], references: [id], onDelete: Cascade)
+  newsArticle   NewsArticle @relation(fields: [newsArticleId], references: [id], onDelete: Cascade)
+
+  @@unique([likerId, newsArticleId]) //prevent multiple likes by same person
+  @@map("news_article_likes")
+}
+
+model Event {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  summary      String?
+  description  String
+  category     EventCategory @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  startDate    DateTime
+  endDate      DateTime?
+  location     String
+  coverImageId String?
+  coverImage   Media?        @relation("EventCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  media        Media[]       @relation("EventMedia")
+
+  status   EventStatus @default(DRAFT)
+  authorId String?
+  author   User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  eventComments EventComment[]
+  eventLikes    EventLike[]
+
+  @@map("events")
+}
+
+model EventCategory {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  slug   String  @unique
+  events Event[]
+
+  @@map("event_categories")
+}
+
+model EventComment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model EventLike {
+  id      String @id @default(uuid())
+  userId  String
+  eventId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId]) // Prevent multiple likes by same user
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  PRIVATE
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+  STAFF
+}
