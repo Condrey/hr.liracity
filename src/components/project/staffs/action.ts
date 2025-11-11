@@ -23,6 +23,7 @@ import { cache } from "react";
 async function allDepartments() {
   return await prisma.departMent.findMany({
     include: departmentDataInclude,
+    orderBy: { name: "asc" },
   });
 }
 export const getAllDepartments = cache(allDepartments);
