@@ -3,11 +3,12 @@
 import { useSession } from "@/app/session-provider";
 import EmptyContainer from "@/components/query-containers/empty-container";
 import ErrorContainer from "@/components/query-containers/error-container";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, ButtonProps, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Role } from "@/generated/prisma";
 import { myPrivileges } from "@/lib/enums";
 import { EmployeeData } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getAllDepartments } from "../action";
@@ -19,6 +20,7 @@ interface ButtonAddEditEmployeeProps extends ButtonProps {
 
 export default function ButtonAddEditEmployee({
   employee,
+  size,
   ...props
 }: ButtonAddEditEmployeeProps) {
   const [open, setOpen] = useState(false);
@@ -34,7 +36,9 @@ export default function ButtonAddEditEmployee({
   return (
     <>
       {status === "pending" ? (
-        <Skeleton className="w-full ms-auto h-10 max-w-56" />
+        <Skeleton
+          className={cn("ms-auto max-w-56", buttonVariants({ size }))}
+        />
       ) : status === "error" ? (
         <ErrorContainer
           query={query}
@@ -45,6 +49,7 @@ export default function ButtonAddEditEmployee({
       ) : (
         <Button
           onClick={() => setOpen(true)}
+          size={size}
           title={
             employee
               ? `Update ${employee.user.name!.split(" ").pop()}'s information`

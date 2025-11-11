@@ -5,6 +5,8 @@ import EmptyContainer from "@/components/query-containers/empty-container";
 import ErrorContainer from "@/components/query-containers/error-container";
 import { DepartmentData, EmployeeData } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
+import { UserPlusIcon } from "lucide-react";
+import ButtonAddEditEmployee from "../staffs/(form)/button-add-edit-employee";
 import { useStaffListColumn } from "../staffs/columns";
 import { getDepartmentAndEmployeesByDepartmentId } from "./action";
 import DepartmentContainer from "./department-container";
@@ -48,9 +50,13 @@ export default function ListOfDepartmentStaffs({
         <DataTable
           data={data.staffs}
           columns={useStaffListColumn}
-          filterColumn={{ id: "user_name" }}
+          filterColumn={{ id: "user_name", label: "name" }}
           className="w-full  mx-auto"
-        />
+        >
+          <ButtonAddEditEmployee>
+            <UserPlusIcon />
+          </ButtonAddEditEmployee>
+        </DataTable>
       )}
     </>
   );
