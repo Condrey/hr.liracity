@@ -4,12 +4,12 @@ import prisma from "@/lib/prisma";
 import { staffLoginSchema, StaffLoginValues } from "@/lib/validation";
 import { verify } from "@node-rs/argon2";
 import { redirect } from "next/navigation";
-import { createSession } from "../../lib/session";
-import { generateSessionToken, setSessionTokenCookie } from "../../lib/tokens";
+import { createSession } from "../lib/session";
+import { generateSessionToken, setSessionTokenCookie } from "../lib/tokens";
 
 export async function loginAction(
   credentials: StaffLoginValues,
-  loginRedirectUrl: string,
+  loginRedirectUrl: string
 ): Promise<{ error: string }> {
   console.log(credentials);
   const { ippsNumber, password } = staffLoginSchema.parse(credentials);
@@ -52,6 +52,6 @@ export async function loginAction(
   return redirect(
     existingUser.isVerified
       ? loginRedirectUrl
-      : `/user-verification/${existingUser.id}`,
+      : `/user-verification/${existingUser.id}`
   );
 }
