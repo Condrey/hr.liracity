@@ -32,6 +32,7 @@ export default async function Page() {
         <h1 className="text-center sm:text-xl text-lg uppercase font-bold text-primary">
           Administrator Login
         </h1>
+        <span></span>
         <LoginForm />
       </div>
     </main>
